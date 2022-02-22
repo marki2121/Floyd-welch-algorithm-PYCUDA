@@ -64,7 +64,8 @@ print(dist_mat)
 #magic = mod.get_function("funkcija")
 
 #for k in range(V):
-#    magic(drv.Out(rez)#    m = rez
+  #  magic(drv.Out(rez), drv.In(m), drv.In(k), block=(V,V,1), grid=(1,1))
+ #   m = rez
 
 
 print("\n\nGPU:  \n")
