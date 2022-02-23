@@ -48,9 +48,21 @@ print("\n Vrijeme: " + str(t2-t1))
 mod = SourceModule(open("main.cu").read())
 magic = mod.get_function("funkcija")
 
+block = V / 32
+
+if (block > 1):
+    if(block % 2 != 0):
+        block = int(block) + 1
+    V = 32
+else:
+    block = 1 
+
+print("\n\nBlock size (" + str(V), ", " + str(V) + ", 1)")
+print("Grid size (" + str(int(block)) + ", " + str(int(block)) + ")")
+
 t1 = time.time()
 for k in range(V):
-    magic(drv.InOut(m), drv.In(VV), drv.In(numpy.int32(k)), block=(V, V, 1), grid=(1, 1))
+    magic(drv.InOut(m), drv.In(VV), drv.In(numpy.int32(k)), block=(int(V), int(V), 1), grid=(int(block), int(block)))
 t2 = time.time()
 
 print("\n\n GPU: \n")
