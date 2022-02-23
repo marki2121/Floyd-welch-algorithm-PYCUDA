@@ -3,7 +3,6 @@ import pycuda.driver as drv
 import numpy
 from pycuda.compiler import SourceModule
 
-from scipy.sparse.csgraph import floyd_warshall
 from random import seed, randint
 
 import time
@@ -12,9 +11,9 @@ V = int(input("Kolika je matrica? \n>"))
 
 VV = numpy.int32(V)
 m = numpy.empty((V,V), dtype=numpy.float32)
-rez = numpy.empty_like(m)
-tmp = numpy.empty_like(m)
+rez_cpu = numpy.empty_like(m)
 
+rez_cpu = m
 
 def rand_unos():
     seed(1)
@@ -36,10 +35,15 @@ print(m)
 print("\n\n\n")
 
 t1 = time.time()
-dist_mat, pred = floyd_warshall(csgraph=m, return_predecessors=True)
+for k in range(V):
+    for i in range(V):
+        for j in range(V):
+            if((rez_cpu[i][k] + rez_cpu[k][j]) < rez_cpu[i][j]):
+                rez_cpu[i][j] = rez_cpu[i][k] + rez_cpu[k][j]
+
 t2 = time.time()
 print("CPU: \n")
-print(dist_mat)
+print(rez_cpu)
 print("\n Vrijeme: " + str(t2-t1))
 
 mod = SourceModule(open("main.cu").read())

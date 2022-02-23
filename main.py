@@ -3,30 +3,17 @@ import pycuda.driver as drv
 import numpy
 from pycuda.compiler import SourceModule
 
-from scipy.sparse.csgraph import floyd_warshall
 from random import seed, randint
+
+import time
 
 V = int(input("Kolika je matrica? \n>"))
 
+VV = numpy.int32(V)
 m = numpy.empty((V,V), dtype=numpy.float32)
-rez = numpy.empty_like(m)
-tmp = numpy.empty_like(m)
+rez_cpu = numpy.empty_like(m)
 
-def sam_unesi():
-    for i in range(V):
-        for j in range(V):
-            if i==j:
-                m[i][j] = 0
-            else:
-                n = input("Kolika je velicina u tocki x(" + str(i) + "," + str(j) + ")?\nAko je nema ostavi prazno!!!\n>")
-
-                if n != "":
-                    if float(n) > 10:
-                        m[i][j] = numpy.Inf
-                    else:
-                        m[i][j] = float(n)
-                else: 
-                    m[i][j] = numpy.NaN
+rez_cpu = m
 
 def rand_unos():
     seed(1)
@@ -35,39 +22,50 @@ def rand_unos():
             if i==j:
                 m[i][j] = 0
             else:
-                n = randint(0, 10)
+                n = randint(1, 20)
+                if float(n) > 16:
+                    m[i][j] = numpy.Inf
+                else:
+                    m[i][j] = float(n)
 
-                if n > 1:
-                    if float(n) > 8:
-                        m[i][j] = numpy.Inf
-                    else:
-                        m[i][j] = float(n)
-                else: 
-                    m[i][j] = numpy.NaN
 
-o = input("Dali zelite da matica bude random d/n?\n>")
-
-if o.lower() == "d":
-    rand_unos()
-else:
-    sam_unesi()
+rand_unos()
 
 print(m)
 print("\n\n\n")
 
-dist_mat, pred = floyd_warshall(csgraph=m, return_predecessors=True)
+t1 = time.time()
+for k in range(V):
+    for i in range(V):
+        for j in range(V):
+            if((rez_cpu[i][k] + rez_cpu[k][j]) < rez_cpu[i][j]):
+                rez_cpu[i][j] = rez_cpu[i][k] + rez_cpu[k][j]
 
+t2 = time.time()
 print("CPU: \n")
-print(dist_mat)
+print(rez_cpu)
+print("\n Vrijeme: " + str(t2-t1))
 
-#mod = SourceModule(open("main.cu").read())
-#magic = mod.get_function("funkcija")
+mod = SourceModule(open("main.cu").read())
+magic = mod.get_function("funkcija")
 
-#for k in range(V):
-  #  magic(drv.Out(rez), drv.In(m), drv.In(k), block=(V,V,1), grid=(1,1))
- #   m = rez
+block = V / 32
 
+if (block > 1):
+    if(block % 2 != 0):
+        block = int(block) + 1
+    V = 32
+else:
+    block = 1 
 
-print("\n\nGPU:  \n")
+print("\n\nBlock size (" + str(V), ", " + str(V) + ", 1)")
+print("Grid size (" + str(int(block)) + ", " + str(int(block)) + ")")
 
+t1 = time.time()
+for k in range(V):
+    magic(drv.InOut(m), drv.In(VV), drv.In(numpy.int32(k)), block=(int(V), int(V), 1), grid=(int(block), int(block)))
+t2 = time.time()
 
+print("\n\n GPU: \n")
+print(m)
+print("\n Vrijeme: " + str(t2-t1))
