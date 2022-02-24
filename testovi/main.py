@@ -23,15 +23,12 @@ def rand_unos():
             if i==j:
                 m[i][j] = 0
             else:
-                n = randint(0, 10)
+                n = randint(1, 20)
+                if float(n) > 16:
+                    m[i][j] = numpy.Inf
+                else:
+                    m[i][j] = float(n)
 
-                if n > 1:
-                    if float(n) > 8:
-                        m[i][j] = numpy.Inf
-                    else:
-                        m[i][j] = float(n)
-                else: 
-                    m[i][j] = numpy.NaN
 
 rand_unos()
 
